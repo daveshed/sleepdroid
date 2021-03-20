@@ -1,7 +1,8 @@
 import curses
 import logging
+import time
 
-from sleepcounter.core.widget import BaseWidget
+from sleepcounter.core.widget import SynchronousBaseWidget
 
 
 logging.basicConfig(
@@ -12,17 +13,22 @@ logging.basicConfig(
 )
 
 
-class CursesWidget(BaseWidget):
+class CursesWidget(SynchronousBaseWidget):
     _X_OFFSET = 2
     _Y_OFFSET = 1
 
     def __init__(self, screen, calendar, label=None):
         self._screen = screen
         self._screen.clear()
+        self._screen.border(0)
         self._rows, self._cols = self._screen.getmaxyx()
         # draw a border around the whole screen...
-        self._screen.border(0)
         super().__init__(calendar, label)
+
+    def start(self):
+        while True:
+            self.update()
+            time.sleep(60)
 
     def update(self):
         events = sorted(
@@ -30,7 +36,7 @@ class CursesWidget(BaseWidget):
             key=self._calendar.sleeps_to_event,
         )
         for idx, event in enumerate(events):
-            description = f"{event.name:40s}"
+            description = f"{event.name:30s}"
             if event.today:
                 status = "***TODAY***"
                 attr = curses.A_STANDOUT
@@ -41,13 +47,15 @@ class CursesWidget(BaseWidget):
                 )
                 attr = curses.A_NORMAL
             message = f"{description}: {status}"
+            assert len(message) < (self._cols - self._X_OFFSET), \
+               "Message does not fit" 
             self._screen.addstr(
                 idx + self._Y_OFFSET,
                 self._X_OFFSET,
                 message,
                 attr,
             )
-        self._screen.refresh()
+            self._screen.refresh()
 
 # loading a custom diary...
 with open('diary.py') as file:
