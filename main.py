@@ -31,6 +31,7 @@ class CursesWidget(SynchronousBaseWidget):
             time.sleep(60)
 
     def update(self):
+        self._clear()
         events = sorted(
             self._calendar.events,
             key=self._calendar.sleeps_to_event,
@@ -38,7 +39,7 @@ class CursesWidget(SynchronousBaseWidget):
         for idx, event in enumerate(events):
             description = f"{event.name:30s}"
             if event.today:
-                status = "***TODAY***"
+                status = "***TODAY!!!***"
                 attr = curses.A_STANDOUT
             else:
                 status = (
@@ -56,6 +57,10 @@ class CursesWidget(SynchronousBaseWidget):
                 attr,
             )
             self._screen.refresh()
+ 
+    def _clear(self):
+        self._screen.clear()
+        self._screen.border(0)
 
 # loading a custom diary...
 with open('diary.py') as file:
